@@ -22,7 +22,7 @@ body {
 .app__logo {
   max-width: 100%;
   height: auto;
-  max-height: 170px;
+  max-height: 130px;
   /* Reasonable max height for logo */
   object-fit: contain;
 }
