@@ -1,27 +1,11 @@
 import { boardCells, boardMask, cellIndexByCoord, cellIndexById, getVisibleCellsForDate } from '../data/board'
-import type { PieceDef, Placement, UiPlacement } from '../data/pieces'
+import type { Placement, UiPlacement } from '../data/pieces'
 import { buildPlacementIndex, totalPiecesArea } from '../data/pieces'
+import type { WorkerInMsg, WorkerOutMsg } from './solve'
 
-type SolveMsg = { type: 'solve'; dateMs: number; pieces: PieceDef[] }
-type CountMsg = { type: 'count_solutions'; dateMs: number; pieces: PieceDef[]; maxSolutions?: number; storeLimit?: number }
-type StopMsg = { type: 'stop' }
-type InMsg = SolveMsg | CountMsg | StopMsg
+const post = (msg: WorkerOutMsg) => postMessage(msg)
 
-type LogMsg = { type: 'log'; line: string }
-type ResultMsg = { type: 'result'; placements: UiPlacement[]; iterations: number; elapsedMs: number }
-type CountResultMsg = {
-  type: 'count_result'
-  solutions: number // unique solutions
-  rawSolutions?: number // total solutions encountered (may include duplicates)
-  iterations: number
-  elapsedMs: number
-  storedSolutions?: UiPlacement[][]
-}
-type NoSolutionMsg = { type: 'no_solution'; iterations: number; elapsedMs: number }
-type ErrorMsg = { type: 'error'; message: string }
-type OutMsg = LogMsg | ResultMsg | CountResultMsg | NoSolutionMsg | ErrorMsg
 
-const post = (msg: OutMsg) => postMessage(msg)
 
 const getLowestBitIndex = (mask: bigint): number => {
   let idx = 0
@@ -102,7 +86,7 @@ const search = (
   return null
 }
 
-self.onmessage = (ev: MessageEvent<InMsg>) => {
+self.onmessage = (ev: MessageEvent<WorkerInMsg>) => {
   if (ev.data.type === 'stop') {
     // App will terminate worker; nothing needed here.
     return
@@ -244,11 +228,11 @@ self.onmessage = (ev: MessageEvent<InMsg>) => {
 
     searchCount(targetMask, new Set(pieceIds), [])
     const elapsedMs = performance.now() - start
-    post({ 
-      type: 'count_result', 
+    post({
+      type: 'count_result',
       solutions: solutions.count,
       rawSolutions: rawSolutions.count,
-      iterations: iterations.count, 
+      iterations: iterations.count,
       elapsedMs,
       storedSolutions: storedSolutions.length > 0 ? storedSolutions : undefined
     })
@@ -256,4 +240,3 @@ self.onmessage = (ev: MessageEvent<InMsg>) => {
     post({ type: 'error', message: e instanceof Error ? e.message : 'Erreur inconnue' })
   }
 }
-

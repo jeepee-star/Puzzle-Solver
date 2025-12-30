@@ -1,8 +1,8 @@
+import { memo, useEffect } from 'react'
 import { Board } from './Board'
 import type { VisibleCells } from '../data/board'
 import type { PieceDef } from '../data/pieces'
 import type { SolveResult } from '../solver/solve'
-import { useEffect } from 'react'
 
 type Props = {
   isOpen: boolean
@@ -12,15 +12,17 @@ type Props = {
   pieces: PieceDef[]
 }
 
-export function LargeBoardModal({ isOpen, onClose, visible, solution, pieces }: Props) {
-  // Close on Escape key
+export const LargeBoardModal = memo(function LargeBoardModal({ isOpen, onClose, visible, solution, pieces }: Props) {
+  // Close on Escape key - only add listener when modal is open
   useEffect(() => {
+    if (!isOpen) return
+
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', handleEsc)
     return () => window.removeEventListener('keydown', handleEsc)
-  }, [onClose])
+  }, [isOpen, onClose])
 
   if (!isOpen) return null
 
@@ -37,4 +39,5 @@ export function LargeBoardModal({ isOpen, onClose, visible, solution, pieces }: 
       </div>
     </div>
   )
-}
+})
+

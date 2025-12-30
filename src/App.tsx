@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CalendarPicker } from './components/CalendarPicker'
 import { Board } from './components/Board'
-import type { SolveResult } from './solver/solve'
+import type { CountResult, SolveResult, WorkerOutMsg } from './solver/solve'
 import { getVisibleCellsForDate } from './data/board'
 import './App.css'
 import { LogsPanel } from './components/LogsPanel'
@@ -10,21 +10,7 @@ import { SolutionsModal } from './components/SolutionsModal'
 import { LargeBoardModal } from './components/LargeBoardModal'
 import { PUZZLE_PIECES } from './data/pieces'
 
-type WorkerOutMsg =
-  | { type: 'log'; line: string }
-  | { type: 'result'; placements: { pieceId: string; cellIndexes: number[] }[]; iterations: number; elapsedMs: number }
-  | {
-    type: 'count_result'
-    solutions: number
-    rawSolutions?: number
-    iterations: number
-    elapsedMs: number
-    storedSolutions?: { pieceId: string; cellIndexes: number[] }[][]
-  }
-  | { type: 'no_solution'; iterations: number; elapsedMs: number }
-  | { type: 'error'; message: string }
 
-type CountResult = { solutions: number; rawSolutions?: number; iterations: number; elapsedMs: number }
 
 function App() {
   const [selectedDate, setSelectedDate] = useState(new Date())
@@ -44,21 +30,30 @@ function App() {
   const visibleCells = useMemo(() => {
     try {
       return getVisibleCellsForDate(selectedDate)
-    } catch (e) {
+    } catch {
       return null
     }
   }, [selectedDate])
 
-  const appendLog = (line: string) => {
+  const appendLog = useCallback((line: string) => {
     const ts = new Date().toLocaleTimeString('fr-CA')
     setLogs((prev) => [...prev, `[${ts}] ${line}`])
-  }
+  }, [])
 
+  // Initial mount: scroll to top and log pieces loaded
   useEffect(() => {
-    // Cancel browser scroll restoration immediately on mount
     window.scrollTo(0, 0)
     appendLog(`${PUZZLE_PIECES.length} pièces chargées`)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appendLog])
+
+  // Cleanup worker on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (workerRef.current) {
+        workerRef.current.terminate()
+        workerRef.current = null
+      }
+    }
   }, [])
 
   // Reset solutions when date changes
@@ -75,16 +70,16 @@ function App() {
     setIsCounting(false)
   }, [selectedDate])
 
-  const stopSolving = () => {
+  const stopSolving = useCallback(() => {
     if (workerRef.current) {
       workerRef.current.terminate()
       workerRef.current = null
       appendLog('Stop: tâche interrompue')
     }
     setIsCounting(false)
-  }
+  }, [appendLog])
 
-  const handleSolve = () => {
+  const handleSolve = useCallback(() => {
     if (!visibleCells) {
       setError('Date invalide pour ce plateau')
       return
@@ -118,7 +113,6 @@ function App() {
         return
       }
       if (msg.type === 'no_solution') {
-        // Comptage: 0 solution
         setCountResult({ solutions: 0, iterations: msg.iterations, elapsedMs: msg.elapsedMs })
         appendLog(`Comptage terminé: 0 solution (itérations: ${msg.iterations.toLocaleString('fr-CA')})`)
         setIsCounting(false)
@@ -128,7 +122,6 @@ function App() {
         setCountResult({ solutions: msg.solutions, rawSolutions: msg.rawSolutions, iterations: msg.iterations, elapsedMs: msg.elapsedMs })
         if (msg.storedSolutions && msg.storedSolutions.length > 0) {
           setStoredSolutions(msg.storedSolutions)
-          // Afficher automatiquement la solution #1
           setSolution({ placements: msg.storedSolutions[0], iterations: 0 })
           setSelectedSolutionIndex(0)
         }
@@ -140,19 +133,17 @@ function App() {
         setIsCounting(false)
         return
       }
-      if (msg.type === 'result') {
-        // Ignoré en mode "count"
-        return
-      }
+      // msg.type === 'result' is ignored in count mode
     }
 
     worker.postMessage({ type: 'count_solutions', dateMs: selectedDate.getTime(), pieces: PUZZLE_PIECES, storeLimit: 500 })
-  }
+  }, [visibleCells, selectedDate, appendLog])
 
-  const handleSelectSolution = (index: number, solution: { pieceId: string; cellIndexes: number[] }[]) => {
-    setSolution({ placements: solution, iterations: 0 })
+  const handleSelectSolution = useCallback((index: number, sol: { pieceId: string; cellIndexes: number[] }[]) => {
+    setSolution({ placements: sol, iterations: 0 })
     setSelectedSolutionIndex(index)
-  }
+  }, [])
+
 
   return (
     <div className="app">

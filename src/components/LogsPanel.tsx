@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { memo, useEffect, useRef } from 'react'
 
 type Props = {
   lines: string[]
   onClear: () => void
 }
 
-export function LogsPanel({ lines, onClear }: Props) {
+export const LogsPanel = memo(function LogsPanel({ lines, onClear }: Props) {
   const endRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -34,6 +34,5 @@ export function LogsPanel({ lines, onClear }: Props) {
       </div>
     </div>
   )
-}
-
+})
 
