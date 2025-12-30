@@ -306,8 +306,8 @@ button.app__pieces-button {
   font-weight: 600;
   border: 1px solid #bbf7d0;
   animation: slideIn 0.3s ease-out;
-  min-height: 3.5rem;
-  /* Fix height stability */
+  height: 6rem;
+  /* Fix height stability (accommodates title) */
   display: flex;
   align-items: center;
   justify-content: center;
