@@ -675,7 +675,7 @@ button.app__pieces-button {
   width: auto;
   height: auto;
   max-width: 95vw;
-  max-height: 90vh;
+  max-height: 95vh;
   background: white;
   border-radius: 1rem;
   box-shadow: var(--shadow-lg);
@@ -697,22 +697,21 @@ button.app__pieces-button {
 
 /* Ensure the board inside the modal scales up naturally but stays within view */
 .modal__large-content .board {
-  /* Use vh to ensure it never exceeds vertical space */
-  max-height: 80vh;
+  /* Use both vh and vw constraints to ensure it fits on any screen */
+  max-height: 85vh;
+  max-width: 85vw;
   /* Link width to height via aspect ratio (approx 7 cols / 8 rows) */
   aspect-ratio: 7/8;
   width: auto;
-
-  /* Also constraint by max-width for very wide/short screens */
-  max-width: 100%;
+  height: auto;
 
   margin: auto;
 }
 
 /* Increase font size inside large board for better visibility */
 .modal__large-content .board .board__cell {
-  /* Use fluid font size based on container or just slightly smaller relative em */
-  font-size: clamp(1rem, 4vh, 2rem);
+  /* Use fluid font size based on viewport */
+  font-size: clamp(0.875rem, 3.5vh, 2rem);
 }
 
 .modal__close-float {
