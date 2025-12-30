@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { memo, useCallback, useMemo } from 'react'
 
 const weekdayLabels = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
 const monthLabels = ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -11,30 +11,38 @@ type Props = {
 const sameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 
-export function CalendarPicker({ value, onChange }: Props) {
-  const monthStart = useMemo(() => new Date(value.getFullYear(), value.getMonth(), 1), [value])
-  const daysInMonth = new Date(value.getFullYear(), value.getMonth() + 1, 0).getDate()
-  const startWeekday = monthStart.getDay() // 0 = Dim
+export const CalendarPicker = memo(function CalendarPicker({ value, onChange }: Props) {
+  const rows = useMemo(() => {
+    const monthStart = new Date(value.getFullYear(), value.getMonth(), 1)
+    const daysCount = new Date(value.getFullYear(), value.getMonth() + 1, 0).getDate()
+    const startWd = monthStart.getDay()
 
-  const days: Array<{ date: Date; label: number }> = []
-  for (let d = 1; d <= daysInMonth; d++) {
-    days.push({ date: new Date(value.getFullYear(), value.getMonth(), d), label: d })
-  }
+    const days: Array<{ date: Date; label: number }> = []
+    for (let d = 1; d <= daysCount; d++) {
+      days.push({ date: new Date(value.getFullYear(), value.getMonth(), d), label: d })
+    }
 
-  const cells: Array<Date | null> = []
-  for (let i = 0; i < startWeekday; i++) cells.push(null)
-  days.forEach((d) => cells.push(d.date))
+    const cells: Array<Date | null> = []
+    for (let i = 0; i < startWd; i++) cells.push(null)
+    days.forEach((d) => cells.push(d.date))
 
-  const rows: Array<Array<Date | null>> = []
-  for (let i = 0; i < cells.length; i += 7) {
-    rows.push(cells.slice(i, i + 7))
-  }
+    const rowsArr: Array<Array<Date | null>> = []
+    for (let i = 0; i < cells.length; i += 7) {
+      rowsArr.push(cells.slice(i, i + 7))
+    }
 
-  const gotoMonth = (delta: number) => {
-    const next = new Date(value)
-    next.setMonth(value.getMonth() + delta)
-    onChange(next)
-  }
+    return rowsArr
+  }, [value])
+
+
+  const gotoMonth = useCallback(
+    (delta: number) => {
+      const next = new Date(value)
+      next.setMonth(value.getMonth() + delta)
+      onChange(next)
+    },
+    [value, onChange],
+  )
 
   return (
     <div className="calendar">
@@ -74,5 +82,5 @@ export function CalendarPicker({ value, onChange }: Props) {
       </div>
     </div>
   )
-}
+})
 
