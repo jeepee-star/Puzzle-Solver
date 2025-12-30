@@ -165,7 +165,7 @@ function App() {
           <CalendarPicker value={selectedDate} onChange={setSelectedDate} />
           <div className="app__buttons">
             <button className="app__solve-button" onClick={handleSolve} disabled={isCounting || !visibleCells}>
-              {!isCounting && !countResult && <img src="/images/puzzle-icon.png" alt="" className="app__button-icon" />}
+              {!isCounting && <img src="/images/puzzle-icon.png" alt="" className="app__button-icon" />}
               {isCounting ? 'Calcul...' : countResult ? 'Recalculer' : 'Résoudre'}
             </button>
             <button className="app__stop-button" onClick={stopSolving} disabled={!isCounting}>
