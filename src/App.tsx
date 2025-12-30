@@ -157,8 +157,7 @@ function App() {
   return (
     <div className="app">
       <header className="app__header">
-        <h1>Résolveur de Puzzle Calendrier</h1>
-        <p className="app__subtitle">Sélectionnez une date et résolvez le puzzle</p>
+        <img src="/images/logo-header.png" alt="Une à la fois - Calendrier 365" className="app__logo" />
       </header>
 
       <div className="app__content">
@@ -166,6 +165,7 @@ function App() {
           <CalendarPicker value={selectedDate} onChange={setSelectedDate} />
           <div className="app__buttons">
             <button className="app__solve-button" onClick={handleSolve} disabled={isCounting || !visibleCells}>
+              {!isCounting && !countResult && <img src="/images/puzzle-icon.png" alt="" className="app__button-icon" />}
               {isCounting ? 'Calcul...' : countResult ? 'Recalculer' : 'Résoudre'}
             </button>
             <button className="app__stop-button" onClick={stopSolving} disabled={!isCounting}>
