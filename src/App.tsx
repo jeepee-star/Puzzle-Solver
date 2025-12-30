@@ -55,6 +55,8 @@ function App() {
   }
 
   useEffect(() => {
+    // Cancel browser scroll restoration immediately on mount
+    window.scrollTo(0, 0)
     appendLog(`${PUZZLE_PIECES.length} pièces chargées`)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
