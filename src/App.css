@@ -323,7 +323,7 @@ button.app__pieces-button {
 .app__board-title {
   color: white;
   /* Force white text */
-  font-size: 2.5rem;
+  font-size: 3.2rem;
   font-family: 'Brush Script MT', cursive;
   display: block;
   transform: rotate(-2deg);
