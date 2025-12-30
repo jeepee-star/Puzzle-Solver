@@ -23,7 +23,7 @@ export function Board({ visible, solution, pieces }: Props) {
   })
 
   return (
-    <div className="board" style={{ gridTemplateColumns: `repeat(${BOARD_COLS}, 1fr)` }}>
+    <div className="board" style={{ gridTemplateColumns: `repeat(${BOARD_COLS}, minmax(0, 1fr))` }}>
       {boardCells.map((cell, idx) => {
         const isVisible = visibleSet.has(cell.id)
         const pieceId = cellToPiece[idx]

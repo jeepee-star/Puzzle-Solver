@@ -697,11 +697,14 @@ button.app__pieces-button {
 
 /* Ensure the board inside the modal scales up naturally but stays within view */
 .modal__large-content .board {
-  /* Use both vh and vw constraints to ensure it fits on any screen */
-  max-height: 85vh;
-  max-width: 85vw;
+  /* Constrain by parent dimensions (which are constrained by viewport) */
+  max-height: 100%;
+  max-width: 100%;
+
   /* Link width to height via aspect ratio (approx 7 cols / 8 rows) */
   aspect-ratio: 7/8;
+
+  /* Prefer filling width, but stop if height limit reached */
   width: auto;
   height: auto;
 
@@ -710,8 +713,13 @@ button.app__pieces-button {
 
 /* Increase font size inside large board for better visibility */
 .modal__large-content .board .board__cell {
-  /* Use fluid font size based on viewport */
-  font-size: clamp(0.875rem, 3.5vh, 2rem);
+  /* Use fluid font size based on smallest viewport dimension */
+  /* min 0.6rem (~9.6px), preferred 5vmin (e.g. 16px on 320px width), max 1.8rem */
+  font-size: clamp(0.6rem, 5vmin, 1.8rem);
+
+  /* Ensure months (3 letters) don't break/overflow */
+  word-break: normal;
+  line-height: 1;
 }
 
 .modal__close-float {
