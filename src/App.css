@@ -41,8 +41,13 @@ body {
 .app__subtitle {
   color: white;
   /* Adapted for dark background */
-  font-size: 1.1rem;
+  font-size: 2.5rem;
+  font-family: 'Brush Script MT', cursive;
   margin: 0;
+  margin-top: -1rem;
+  /* Pull it up closer to the logo */
+  transform: rotate(-2deg);
+  /* Little tilt for fun */
 }
 
 /* Main Content Grid */

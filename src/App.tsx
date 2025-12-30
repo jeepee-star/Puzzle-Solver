@@ -158,6 +158,7 @@ function App() {
     <div className="app">
       <header className="app__header">
         <img src="/images/logo-header.png" alt="Une à la fois - Calendrier 365" className="app__logo" />
+        <p className="app__subtitle">Calendrier 365</p>
       </header>
 
       <div className="app__content">
