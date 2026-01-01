@@ -225,6 +225,10 @@ function App() {
 
       </div>
 
+      <div className="app__footer">
+        © {new Date().getFullYear()}, Conçu par MG et JPG pour Une à la fois
+      </div>
+
       <PiecesModal isOpen={piecesOpen} onClose={() => setPiecesOpen(false)} pieces={PUZZLE_PIECES} />
       <LoadingModal isOpen={isCounting} onStop={stopSolving} />
       <SolutionsModal
