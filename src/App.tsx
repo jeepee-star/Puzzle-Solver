@@ -10,8 +10,6 @@ import { SolutionsModal } from './components/SolutionsModal'
 import { LargeBoardModal } from './components/LargeBoardModal'
 import { PUZZLE_PIECES } from './data/pieces'
 
-
-
 function App() {
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [solution, setSolution] = useState<SolveResult | null>(null)
@@ -26,6 +24,7 @@ function App() {
   const [largeBoardOpen, setLargeBoardOpen] = useState(false)
 
   const workerRef = useRef<Worker | null>(null)
+  const boardSectionRef = useRef<HTMLDivElement>(null)
 
   const visibleCells = useMemo(() => {
     try {
@@ -34,8 +33,6 @@ function App() {
       return null
     }
   }, [selectedDate])
-
-
 
   // Initial mount: scroll to top
   useEffect(() => {
@@ -65,6 +62,22 @@ function App() {
     }
     setIsCounting(false)
   }, [selectedDate])
+
+  // Auto-scroll to board section when calculation completes (mobile)
+  useEffect(() => {
+    // Scroll when countResult is set (calculation finished) and we have a solution
+    if (countResult && solution && boardSectionRef.current) {
+      // Only scroll on mobile/tablet viewports
+      if (window.innerWidth <= 1150) {
+        // Use requestAnimationFrame for better timing with DOM updates
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            boardSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }, 100)
+        })
+      }
+    }
+  }, [countResult, solution])
 
   const stopSolving = useCallback(() => {
     if (workerRef.current) {
@@ -118,15 +131,18 @@ function App() {
       }
       // msg.type === 'result' is ignored in count mode
     }
+    worker.onerror = (err) => {
+      setError(`Erreur du worker: ${err.message || 'Erreur inconnue'}`)
+      setIsCounting(false)
+    }
 
-    worker.postMessage({ type: 'count_solutions', dateMs: selectedDate.getTime(), pieces: PUZZLE_PIECES, storeLimit: 500 })
+    worker.postMessage({ type: 'count_solutions', dateMs: selectedDate.getTime(), pieces: PUZZLE_PIECES, storeLimit: 100 })
   }, [visibleCells, selectedDate])
 
   const handleSelectSolution = useCallback((index: number, sol: { pieceId: string; cellIndexes: number[] }[]) => {
     setSolution({ placements: sol, iterations: 0 })
     setSelectedSolutionIndex(index)
   }, [])
-
 
   return (
     <div className="app">
@@ -137,39 +153,10 @@ function App() {
       <div className="app__content">
         <div className="app__calendar-section">
           <CalendarPicker value={selectedDate} onChange={setSelectedDate} />
-          <div className="app__buttons">
-            <button className="app__solve-button" onClick={handleSolve} disabled={isCounting || !visibleCells}>
-              {!isCounting && <img src="/images/puzzle-icon.png" alt="" className="app__button-icon" />}
-              {isCounting ? 'Calcul...' : countResult ? 'Recalculer' : 'Résoudre'}
-            </button>
-            <button className="app__stop-button" onClick={stopSolving} disabled={!isCounting}>
-              Stop
-            </button>
-            <button className="app__pieces-button" onClick={() => setPiecesOpen(true)}>
-              Voir les pièces
-            </button>
-          </div>
         </div>
 
-        <div className="app__board-section">
+        <div className="app__board-section" ref={boardSectionRef}>
           {error && <div className="app__error">{error}</div>}
-
-          <div className={`app__solution-info ${solution ? 'visible' : 'placeholder'}`}>
-            {solution ? (
-              <>
-                {storedSolutions.length > 0
-                  ? `Solution #${(selectedSolutionIndex ?? 0) + 1} sur ${storedSolutions.length.toLocaleString('fr-CA')} stockée(s)`
-                  : solution.iterations > 0
-                    ? `Solution trouvée en ${solution.iterations.toLocaleString('fr-CA')} itérations`
-                    : 'Solution affichée'}
-                {typeof solution.elapsedMs === 'number' && solution.elapsedMs > 0
-                  ? ` (${solution.elapsedMs.toFixed(0)} ms)`
-                  : null}
-              </>
-            ) : (
-              <span className="app__board-title">Calendrier 365</span>
-            )}
-          </div>
 
           {visibleCells && (
             <div style={{ position: 'relative' }}>
@@ -184,45 +171,50 @@ function App() {
             </div>
           )}
 
-          {/* Zone sous le plateau: infos de comptage */}
-          <div className="app__count-panel" aria-live="polite">
-            <div className="app__count-result">
-              <div className="app__count-value">
-                {countResult
-                  ? `${countResult.solutions.toLocaleString('fr-CA')} solution(s) unique(s)`
-                  : '— solution(s) unique(s)'}
-              </div>
-              <div className="app__count-meta">
-                {countResult ? (
-                  <>
-                    {typeof countResult.rawSolutions === 'number'
-                      ? `${countResult.rawSolutions.toLocaleString('fr-CA')} brutes • `
-                      : ''}
-                    {countResult.iterations.toLocaleString('fr-CA')} itérations • {countResult.elapsedMs.toFixed(0)} ms
-                  </>
-                ) : (
-                  <span>—</span>
-                )}
-              </div>
+          {/* Compact Solution Stats */}
+          <div className="solution-stats">
+            {countResult ? (
+              <div className="solution-stats__content">
+                <div className="solution-stats__main">
+                  <span className="solution-stats__count">{countResult.solutions.toLocaleString('fr-CA')} solution(s)</span>
+                  {storedSolutions.length > 0 && (
+                    <button className="solution-stats__link" onClick={() => setSolutionsOpen(true)}>
+                      Voir ({storedSolutions.length})
+                    </button>
+                  )}
+                </div>
 
-              <div className="app__count-actions">
-                {storedSolutions.length > 0 ? (
-                  <button className="app__count-button" onClick={() => setSolutionsOpen(true)}>
-                    Voir les solutions ({storedSolutions.length.toLocaleString('fr-CA')})
-                  </button>
-                ) : (
-                  <span className="app__count-actionsPlaceholder">&nbsp;</span>
-                )}
+                <div className="solution-stats__meta">
+                  {solution && (
+                    <span className="solution-stats__current">
+                      {storedSolutions.length > 0
+                        ? `Solution #${(selectedSolutionIndex ?? 0) + 1}`
+                        : 'Solution affichée'} •
+                    </span>
+                  )}
+                  {countResult.elapsedMs.toFixed(0)}ms • {countResult.iterations.toLocaleString('fr-CA')} itérations
+                </div>
               </div>
-
-              <div className="app__count-hint">
-                {countResult ? <span>&nbsp;</span> : 'Cliquez sur Résoudre pour calculer toutes les solutions.'}
-              </div>
-            </div>
+            ) : (
+              isCounting ? (
+                <div className="solution-stats__placeholder">
+                  Calcul en cours...
+                </div>
+              ) : null
+            )}
           </div>
         </div>
 
+        <div className="app__actions">
+          <button className="app__solve-button" onClick={handleSolve} disabled={isCounting || !visibleCells}>
+            {!isCounting && <img src="/images/puzzle-icon.png" alt="" className="app__button-icon" />}
+            {isCounting ? 'Calcul...' : countResult ? 'Recalculer' : 'Résoudre'}
+          </button>
 
+          <button className="app__pieces-button" onClick={() => setPiecesOpen(true)}>
+            Voir les pièces
+          </button>
+        </div>
       </div>
 
       <div className="app__footer">
@@ -237,15 +229,17 @@ function App() {
         solutions={storedSolutions}
         onSelectSolution={handleSelectSolution}
       />
-      {visibleCells && (
-        <LargeBoardModal
-          isOpen={largeBoardOpen}
-          onClose={() => setLargeBoardOpen(false)}
-          visible={visibleCells}
-          solution={solution}
-          pieces={PUZZLE_PIECES}
-        />
-      )}
+      {
+        visibleCells && (
+          <LargeBoardModal
+            isOpen={largeBoardOpen}
+            onClose={() => setLargeBoardOpen(false)}
+            visible={visibleCells}
+            solution={solution}
+            pieces={PUZZLE_PIECES}
+          />
+        )
+      }
     </div>
   )
 }

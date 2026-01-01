@@ -27,13 +27,11 @@ body {
   object-fit: contain;
 }
 
-
-
 .app__footer {
   text-align: center;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.6);
   font-size: 0.85rem;
-  margin-top: 3rem;
+  margin-top: 1rem;
   padding-bottom: 1rem;
   font-weight: 500;
 }
@@ -49,56 +47,40 @@ body {
   letter-spacing: -0.025em;
 }
 
-/* Main Content Grid */
+/* Sections */
 .app__content {
   display: flex;
-  gap: 1.5rem;
-  /* Align items stretch to make columns equal height */
-  align-items: stretch;
   justify-content: center;
-  /* On force le layout en ligne sur grand écran, wrap seulement si nécessaire */
-  flex-wrap: nowrap;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: stretch;
 }
 
-/* Sections */
 .app__calendar-section,
 .app__board-section {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-}
-
-.app__calendar-section {
-  flex: 0 0 300px;
-  min-width: 300px;
-}
-
-.app__board-section {
-  flex: 0 0 auto;
-  align-items: center;
+  flex: 0 0 400px;
   width: 400px;
-  min-width: 400px;
+  min-width: 0;
 }
-
-
 
 /* Card Style Generic */
-.calendar,
-.app__count-panel {
+.calendar {
   background: white;
   border-radius: 1rem;
   box-shadow: var(--shadow-md);
   border: 1px solid #e2e8f0;
-}
-
-/* --- Calendar Specifics --- */
-.calendar {
   padding: 1.5rem;
-  /* Stretch to fill empty space, pushing buttons to bottom with consistent gap */
-  flex: 1;
   display: flex;
   flex-direction: column;
+  width: 380px;
+  height: 380px;
+  margin: 0 auto;
 }
+
+
 
 .calendar__header {
   display: flex;
@@ -175,12 +157,26 @@ body {
 }
 
 /* --- Buttons Area --- */
-.app__buttons {
+/* --- Actions Bar (Bottom Central) --- */
+.app__actions {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  /* Push buttons to bottom to align with other columns */
-  margin-top: auto;
+  width: 100%;
+  max-width: 400px;
+  /* Match column width */
+  margin: 0.5rem auto 0;
+  /* Center horizontally */
+}
+
+/* Desktop: Force actions to take full row at bottom if wrapping happens, or just be last */
+@media (min-width: 701px) {
+  .app__actions {
+    flex-basis: 100%;
+    /* Create a new row for actions */
+    order: 3;
+    /* Ensure it is last */
+  }
 }
 
 button.app__solve-button,
@@ -257,6 +253,38 @@ button.app__pieces-button {
   padding: 8px;
   border-radius: 1rem;
   box-shadow: var(--shadow-lg);
+  height: 380px;
+  aspect-ratio: 7 / 8;
+  margin: 0 auto;
+}
+
+/* Maximize Button */
+.board__maximize-btn {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: var(--color-text-muted);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: all 0.2s;
+  z-index: 5;
+}
+
+.board__maximize-btn:hover {
+  background: #f8fafc;
+  color: var(--color-primary);
+  transform: scale(1.1);
+  border-color: var(--color-primary);
 }
 
 .board__cell {
@@ -298,54 +326,6 @@ button.app__pieces-button {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
-/* Solution Info Banner */
-.app__solution-info {
-  width: 100%;
-  padding: 1rem;
-  background-color: #dcfce7;
-  /* Green 100 */
-  color: #166534;
-  /* Green 800 */
-  border-radius: 0.75rem;
-  text-align: center;
-  font-weight: 600;
-  border: 1px solid #bbf7d0;
-  animation: slideIn 0.3s ease-out;
-  height: 70px;
-  /* Fix height stability (accommodates title) */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.app__solution-info.placeholder {
-  background-color: transparent;
-  border-color: transparent;
-  color: transparent;
-  animation: none;
-}
-
-.app__board-title {
-  color: white;
-  /* Force white text */
-  font-size: 3.2rem;
-  font-family: 'Brush Script MT', cursive;
-  display: block;
-  transform: rotate(-2deg);
-  opacity: 0.9;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 .app__error {
   width: 100%;
@@ -358,89 +338,82 @@ button.app__pieces-button {
   border: 1px solid #fecaca;
 }
 
-/* --- Count Panel --- */
-.app__count-panel {
+
+/* --- Compact Solution Stats --- */
+.solution-stats {
+  margin-top: 0.5rem;
   width: 100%;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  align-items: center;
-  background: white;
-  min-height: 170px;
-  /* Réserve plus d'espace pour éviter le saut visuel */
-  justify-content: flex-start;
-  /* Push count panel to bottom of board section */
-  margin-top: auto;
-}
-
-.app__count-button {
-  background-color: #0ea5e9;
-  /* Sky 500 */
-  color: white;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 2rem;
-  /* Pill shape */
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.app__count-button:hover:not(:disabled) {
-  background-color: #0284c7;
-  transform: scale(1.05);
-}
-
-.app__count-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.app__count-result {
-  text-align: center;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.app__count-value {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--color-text-main);
-  line-height: 1.2;
-}
-
-.app__count-meta {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-}
-
-.app__count-hint {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  font-style: italic;
-  min-height: 1.2rem;
-  /* réserve la ligne même quand vide */
-  max-width: 520px;
   text-align: center;
 }
 
-.app__count-actions {
-  min-height: 2.25rem;
-  /* réserve l'espace du CTA */
+.solution-stats__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.solution-stats__main {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.75rem;
+  font-size: 1.1rem;
+  color: white;
+  /* Contrast against turquoise bg */
 }
 
-.app__count-actionsPlaceholder {
-  display: inline-block;
-  width: 1px;
+.solution-stats__count {
+  font-weight: 700;
 }
+
+.solution-stats__link {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.solution-stats__link:hover {
+  color: white;
+}
+
+.solution-stats__meta {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.solution-stats__current {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.solution-stats__placeholder {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  font-style: italic;
+  padding: 0.5rem;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
 
 
 
@@ -612,17 +585,34 @@ button.app__pieces-button {
 @media (max-width: 1150px) {
   .app__content {
     flex-wrap: wrap;
-    /* Autorise le retour à la ligne si < 1150px */
     justify-content: center;
   }
 
-
+  .app {
+    padding: 1rem;
+  }
 }
 
 @media (max-width: 700px) {
+  .app {
+    padding: 0.5rem;
+  }
+
+  .app__header {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .app__logo {
+    height: 60px;
+    /* Slightly smaller logo on mobile */
+  }
+
   .app__content {
     flex-direction: column;
     align-items: center;
+    gap: 0.75rem;
+    /* Reduced gap */
   }
 
   .app__calendar-section,
@@ -631,6 +621,50 @@ button.app__pieces-button {
     min-width: 0;
     /* Reset */
     max-width: 400px;
+    margin: 0 auto;
+    gap: 0.75rem;
+    /* Reduced internal section gap */
+    flex: 0 1 auto;
+    /* Reset flex basis to auto for column layout */
+  }
+
+  /* Order on mobile: Calendar -> Actions -> Board */
+  .app__calendar-section {
+    order: 1;
+  }
+
+  .app__actions {
+    order: 2;
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+    width: 100%;
+    max-width: 380px;
+    /* Match calendar width */
+  }
+
+  .app__board-section {
+    order: 3;
+  }
+
+  /* Ensure fixed components scale down on small screens */
+  .calendar {
+    width: 100%;
+    max-width: 380px;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    padding: 0.75rem;
+    /* Reduced padding inside calendar */
+  }
+
+  .board {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    aspect-ratio: 7 / 8;
+  }
+
+  .board__maximize-btn {
+    display: none;
   }
 }
 
@@ -711,34 +745,7 @@ button.app__pieces-button {
   color: var(--color-danger);
 }
 
-/* Maximize Button */
-.board__maximize-btn {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid #cbd5e1;
-  background: white;
-  color: var(--color-text-muted);
-  box-shadow: var(--shadow-sm);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  line-height: 1;
-  transition: all 0.2s;
-  z-index: 5;
-}
 
-.board__maximize-btn:hover {
-  background: #f8fafc;
-  color: var(--color-primary);
-  transform: scale(1.1);
-  border-color: var(--color-primary);
-}
 
 /* --- Loading Modal --- */
 .loading-modal__panel {

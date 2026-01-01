@@ -1,5 +1,4 @@
-
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { PUZZLE_PIECES } from '../data/pieces'
 
 type Props = {
@@ -19,21 +18,26 @@ export function LoadingModal({ isOpen, onStop }: Props) {
         return () => clearInterval(interval)
     }, [isOpen])
 
-    if (!isOpen) return null
+    // Memoize piece calculations to avoid recalculating on every render
+    const { piece, dims, cellSet } = useMemo(() => {
+        const p = PUZZLE_PIECES[pieceIndex]
+        return {
+            piece: p,
+            dims: {
+                w: Math.max(...p.cells.map((c) => c.col)) + 1,
+                h: Math.max(...p.cells.map((c) => c.row)) + 1,
+            },
+            cellSet: new Set(p.cells.map((c) => `${c.row},${c.col}`)),
+        }
+    }, [pieceIndex])
 
-    const piece = PUZZLE_PIECES[pieceIndex]
-    const dims = {
-        w: Math.max(...piece.cells.map((c) => c.col)) + 1,
-        h: Math.max(...piece.cells.map((c) => c.row)) + 1,
-    }
-    const set = new Set(piece.cells.map((c) => `${c.row},${c.col}`))
+    if (!isOpen) return null
 
     return (
         <div className="modal" role="dialog" aria-modal="true">
             <div className="modal__backdrop" />
             <div className="modal__panel loading-modal__panel">
                 <div className="loading-modal__content">
-
                     <div className="loading-piece-container">
                         <div
                             key={pieceIndex}
@@ -46,7 +50,7 @@ export function LoadingModal({ isOpen, onStop }: Props) {
                             {Array.from({ length: dims.w * dims.h }).map((_, i) => {
                                 const row = Math.floor(i / dims.w)
                                 const col = i % dims.w
-                                const filled = set.has(`${row},${col}`)
+                                const filled = cellSet.has(`${row},${col}`)
                                 return (
                                     <div
                                         key={i}
