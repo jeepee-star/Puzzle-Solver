@@ -4,7 +4,7 @@ import { Board } from './components/Board'
 import type { CountResult, SolveResult, WorkerOutMsg } from './solver/solve'
 import { getVisibleCellsForDate } from './data/board'
 import './App.css'
-import { LogsPanel } from './components/LogsPanel'
+import { LoadingModal } from './components/LoadingModal'
 import { PiecesModal } from './components/PiecesModal'
 import { SolutionsModal } from './components/SolutionsModal'
 import { LargeBoardModal } from './components/LargeBoardModal'
@@ -18,7 +18,7 @@ function App() {
   const [isCounting, setIsCounting] = useState(false)
   const [countResult, setCountResult] = useState<CountResult | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [logs, setLogs] = useState<string[]>([])
+
   const [piecesOpen, setPiecesOpen] = useState(false)
   const [storedSolutions, setStoredSolutions] = useState<{ pieceId: string; cellIndexes: number[] }[][]>([])
   const [solutionsOpen, setSolutionsOpen] = useState(false)
@@ -35,16 +35,12 @@ function App() {
     }
   }, [selectedDate])
 
-  const appendLog = useCallback((line: string) => {
-    const ts = new Date().toLocaleTimeString('fr-CA')
-    setLogs((prev) => [...prev, `[${ts}] ${line}`])
-  }, [])
 
-  // Initial mount: scroll to top and log pieces loaded
+
+  // Initial mount: scroll to top
   useEffect(() => {
     window.scrollTo(0, 0)
-    appendLog(`${PUZZLE_PIECES.length} pièces chargées`)
-  }, [appendLog])
+  }, [])
 
   // Cleanup worker on unmount to prevent memory leaks
   useEffect(() => {
@@ -74,10 +70,9 @@ function App() {
     if (workerRef.current) {
       workerRef.current.terminate()
       workerRef.current = null
-      appendLog('Stop: tâche interrompue')
     }
     setIsCounting(false)
-  }, [appendLog])
+  }, [])
 
   const handleSolve = useCallback(() => {
     if (!visibleCells) {
@@ -96,25 +91,18 @@ function App() {
     const worker = new Worker(new URL('./solver/solve.worker.ts', import.meta.url), { type: 'module' })
     workerRef.current = worker
 
-    appendLog(
-      `Résolution démarrée pour ${selectedDate.toLocaleDateString('fr-CA', { weekday: 'short', month: 'short', day: 'numeric' })}`,
-    )
-
     worker.onmessage = (ev: MessageEvent<WorkerOutMsg>) => {
       const msg = ev.data
       if (msg.type === 'log') {
-        appendLog(msg.line)
         return
       }
       if (msg.type === 'error') {
         setError(msg.message)
-        appendLog(`Erreur: ${msg.message}`)
         setIsCounting(false)
         return
       }
       if (msg.type === 'no_solution') {
         setCountResult({ solutions: 0, iterations: msg.iterations, elapsedMs: msg.elapsedMs })
-        appendLog(`Comptage terminé: 0 solution (itérations: ${msg.iterations.toLocaleString('fr-CA')})`)
         setIsCounting(false)
         return
       }
@@ -125,11 +113,6 @@ function App() {
           setSolution({ placements: msg.storedSolutions[0], iterations: 0 })
           setSelectedSolutionIndex(0)
         }
-        appendLog(
-          `Comptage terminé: ${msg.solutions.toLocaleString('fr-CA')} solution(s) unique(s)` +
-          `${typeof msg.rawSolutions === 'number' ? ` (brutes: ${msg.rawSolutions.toLocaleString('fr-CA')})` : ''}` +
-          ` (${msg.iterations.toLocaleString('fr-CA')} itérations, ${msg.elapsedMs.toFixed(0)} ms)`,
-        )
         setIsCounting(false)
         return
       }
@@ -137,7 +120,7 @@ function App() {
     }
 
     worker.postMessage({ type: 'count_solutions', dateMs: selectedDate.getTime(), pieces: PUZZLE_PIECES, storeLimit: 500 })
-  }, [visibleCells, selectedDate, appendLog])
+  }, [visibleCells, selectedDate])
 
   const handleSelectSolution = useCallback((index: number, sol: { pieceId: string; cellIndexes: number[] }[]) => {
     setSolution({ placements: sol, iterations: 0 })
@@ -239,12 +222,11 @@ function App() {
           </div>
         </div>
 
-        <div className="app__logs-section">
-          <LogsPanel lines={logs} onClear={() => setLogs([])} />
-        </div>
+
       </div>
 
       <PiecesModal isOpen={piecesOpen} onClose={() => setPiecesOpen(false)} pieces={PUZZLE_PIECES} />
+      <LoadingModal isOpen={isCounting} onStop={stopSolving} />
       <SolutionsModal
         isOpen={solutionsOpen}
         onClose={() => setSolutionsOpen(false)}
